@@ -19,7 +19,8 @@ public class ActualizarCitaServlet extends HttpServlet {
         try {
             Class.forName("org.postgresql.Driver");
             Connection conn = DriverManager.getConnection(dbURL, dbUser, dbPass);
-            String sql = "UPDATE citas SET usuario=?, fecha=?, hora=?, lugar=?, medico=?, observaciones=? WHERE id=?";
+            // Cambia la línea del SQL por esta exacta:
+String sql = "UPDATE citas SET usuario=?, fecha=?::date, hora=?::time, lugar=?, medico=?, observaciones=? WHERE id=?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, request.getParameter("usuario"));
             ps.setString(2, request.getParameter("fecha"));
