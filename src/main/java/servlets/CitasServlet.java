@@ -33,7 +33,8 @@ public class CitasServlet extends HttpServlet {
             Connection conn = DriverManager.getConnection(dbURL, dbUser, dbPass);
             
             // 3. Orden para guardar
-            String sql = "INSERT INTO citas (usuario, fecha, hora, lugar, medico, observaciones) VALUES (?, ?, ?, ?, ?, ?)";
+            // Cambia la línea del SQL por esta exacta:
+String sql = "INSERT INTO citas (usuario, fecha, hora, lugar, medico, observaciones) VALUES (?, ?::date, ?::time, ?, ?, ?)";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, usuario);
             ps.setString(2, fecha);
