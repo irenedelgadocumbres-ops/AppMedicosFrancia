@@ -35,6 +35,17 @@
             transition: all 0.2s;
         }
         .btn-inicio:active { transform: scale(0.95); }
+        
+        .btn-volver { 
+            padding: 12px 25px; border-radius: 15px; border: none; font-weight: bold; 
+            cursor: pointer; font-size: 1.1em; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background-color: #6c757d; color: white; text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-volver:active { 
+            transform: scale(0.95); 
+        }
 
         /* Contenedor del Formulario */
         .form-container {
@@ -93,6 +104,7 @@
 
     <div class="botonera">
         <a href="index.html" class="btn-inicio">🔒 Cerrar Sesión</a>
+        <a href="vista_mayores.jsp" class="btn-nav btn-volver">⬅️️ Ir a calendario</a>
     </div>
 
     <h1>Panel de Administración</h1>
