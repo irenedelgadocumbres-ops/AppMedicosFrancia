@@ -20,7 +20,9 @@ public class CitasServlet extends HttpServlet {
         String fecha = request.getParameter("fecha");
         String hora = request.getParameter("hora");
         String lugar = request.getParameter("lugar");
+        if ("Otro".equals(lugar)) { lugar = request.getParameter("lugar_otro"); }
         String medico = request.getParameter("medico");
+        if ("Otro".equals(medico)) { medico = request.getParameter("medico_otro"); }
         String observaciones = request.getParameter("observaciones");
 
         // 2. Conexión a tu proyecto en Francia (Pooler IPv4)
