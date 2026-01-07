@@ -26,6 +26,19 @@
         .btn-nav { border: none; padding: 15px 20px; border-radius: 15px; font-weight: bold; font-size: 1em; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-decoration: none; display: inline-block; }
         .btn-cal { background-color: #c8e6c9; color: #2e7d32; }
         .btn-logout { background-color: #ffcdd2; color: #b71c1c; }
+        
+        .btn-admin {
+                    background-color: #28a745; /* Color verde para "añadir" */
+                    color: white;
+                    text-decoration: none;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+        .btn-admin:hover {
+                          background-color: #218838; /* Verde un poco más oscuro al pasar el ratón */
+                    }
 
         /* Paneles de Citas */
         .contenedor-citas { display: flex; flex-direction: column; gap: 20px; }
@@ -58,6 +71,7 @@
     <div class="botonera">
         <a href="index.html" class="btn-nav btn-logout">🔒 Cerrar Sesión</a>
         <button class="btn-nav btn-cal" onclick="toggleCalendario()">Ver Calendario</button>
+        <a href="admin_panel.jsp" class="btn-nav btn-admin">➕ Nueva Cita</a>
     </div>
 
     <div id="seccion-calendario">
