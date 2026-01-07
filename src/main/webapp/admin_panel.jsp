@@ -117,14 +117,39 @@
                 <input type="time" name="hora" required> 
             </div>
             
+            
+            
             <div class="campo">
                 <label>Lugar:</label>
-                <input type="text" name="lugar" placeholder="Hospital / Centro Médico" required> 
+                <select name="lugar" onchange="if(this.value=='Otro'){ document.getElementById('extraLugar').style.display='block'; } else { document.getElementById('extraLugar').style.display='none'; }">
+                    <option value="" disabled selected>Selecciona el lugar...</option>
+                    <option value="Centro de Salud">🏥 Centro de Salud</option>
+                    <option value="Hospital">🏥 Hospital Rey Juan Carlos (Mostoles)</option>
+                    <option value="Especialista">🏢 Centro de Especialidades</option>
+                    <option value="Clínica Privada">🏥 Clínica Privada</option>
+                    <option value="Otro">📍 Otro</option>
+                </select>
+                <div id="extraLugar" style="display:none; margin-top:10px;">
+                    <input type="text" name="lugar_otro" placeholder="¿Dónde es la cita?">
+                </div>
             </div>
             
             <div class="campo">
-                <label>Médico:</label>
-                <input type="text" name="medico" placeholder="Nombre del doctor/a" required> 
+                <label>Médico / Especialidad:</label>
+                <select name="medico" onchange="if(this.value=='Otro'){ document.getElementById('extraMedico').style.display='block'; } else { document.getElementById('extraMedico').style.display='none'; }">
+                    <option value="" disabled selected>Selecciona el médico...</option>
+                    <option value="Médico de Cabecera">👨‍⚕️ Médico de Cabecera</option>
+                    <option value="Enfermería">🩺 Enfermería</option>
+                    <option value="Cardiología">❤️ Cardiología</option>
+                    <option value="Oftalmología">👁️ Oftalmología</option>
+                    <option value="Traumatología">🦴 Traumatología</option>
+                    <option value="Análisis">💉 Análisis de Sangre</option>
+                    <option value="Dentista">🦷 Dentista</option>
+                    <option value="Otro">⚕️ Especialista (Otro)</option>
+                </select>
+                <div id="extraMedico" style="display:none; margin-top:10px;">
+                    <input type="text" name="medico_otro" placeholder="¿Qué médico o especialidad?">
+                </div>
             </div>
             
             <div class="campo">
