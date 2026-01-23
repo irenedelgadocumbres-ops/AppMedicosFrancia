@@ -71,6 +71,10 @@
     <h1>👩 Espacio Personal</h1>
     
     <div class="grid-botones">
+        <a href="CalendarioMadreServlet" class="boton-grande" style="background: linear-gradient(to right, #607d8b, #455a64);">
+            📅 CALENDARIO
+        </a>
+        
         <a href="AgendaMadreServlet?tipo=Medico" class="boton-grande btn-medicos">
             🩺 MÉDICOS
         </a>
