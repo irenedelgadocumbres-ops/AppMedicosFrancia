@@ -85,6 +85,25 @@
         .tabla-historial { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; font-size: 0.9em; }
         .tabla-historial th { background-color: #cfd8dc; padding: 10px; text-align: left; }
         .tabla-historial td { border-bottom: 1px solid #eee; padding: 10px; }
+        
+        /* NUEVO: Botón de Medicación */
+        .btn-medicina {
+            background-color: #00897b; /* Color verde azulado */
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+            display: inline-block;
+            border: 2px solid white;
+        }
+        .btn-medicina:hover {
+            transform: scale(1.05);
+            background-color: #00695c;
+        }
     </style>
 </head>
 <body onload="actualizarCalendario()">
@@ -215,6 +234,12 @@
                 </tbody>
             </table>
         </details>
+    </div>
+                
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="MedicinasServlet" class="btn-medicina">
+            💊 GESTIONAR MEDICACIÓN
+        </a>
     </div>
 
     <script>
