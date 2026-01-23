@@ -13,6 +13,7 @@ import java.time.LocalDate; // Para manejar las fechas
 import java.util.ArrayList; // Para las listas
 import java.util.List;
 import logica.Cita; // <--- ASEGÚRATE QUE TU CLASE CITA ESTÁ EN ESTE PAQUETE
+import logica.DatosVitales;
 
 @WebServlet(name = "CitasServlet", urlPatterns = {"/CitasServlet"})
 public class CitasServlet extends HttpServlet {
@@ -112,12 +113,37 @@ public class CitasServlet extends HttpServlet {
                     listaPendientes.add(c);
                 }
             }
-            conn.close();
+            
 
             // Enviamos las dos listas al JSP
             request.setAttribute("misCitas", listaPendientes);
             request.setAttribute("historialCitas", listaHistorial);
+            
+            
+            // --- NUEVO: CARGAR DATOS VITALES ---
+            String sqlVitales = "SELECT * FROM datos_vitales";
+            PreparedStatement psVitales = conn.prepareStatement(sqlVitales);
+            ResultSet rsVitales = psVitales.executeQuery();
+            
+            while(rsVitales.next()){
+                DatosVitales dv = new DatosVitales(
+                    rsVitales.getString("usuario"),
+                    rsVitales.getString("sip"),
+                    rsVitales.getString("dni"),
+                    rsVitales.getString("sangre"),
+                    rsVitales.getString("alergias"),
+                    rsVitales.getString("contacto")
+                );
+                
+                if("Abuelo".equals(dv.getUsuario())) {
+                    request.setAttribute("vitalAbuelo", dv);
+                } else {
+                    request.setAttribute("vitalAbuela", dv);
+                }
+            }
+            // -----------------------------------
 
+            conn.close();
             // Redirigimos a la vista de mayores para mostrar los datos
             request.getRequestDispatcher("vista_mayores.jsp").forward(request, response);
 
