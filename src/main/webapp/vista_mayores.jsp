@@ -235,13 +235,12 @@
             </table>
         </details>
     </div>
-                
+
     <div style="text-align: center; margin-top: 20px;">
         <a href="MedicinasServlet" class="btn-medicina">
             💊 GESTIONAR MEDICACIÓN
         </a>
     </div>
-
     <script>
         // Los datos ahora vienen de la lista combinada (pasado + futuro)
         const citasData = <%= jsData.toString() %>;
