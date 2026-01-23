@@ -1,28 +1,40 @@
+
+
 <%-- 
     Document   : vista_mayores
-    Created on : 20 dic 2025, 12:49:45
-    Updated on : 24 ene 2026 (Separación Historial)
-    Author     : Asus & Gemini
+    Updated on : 24 ene 2026 (Integración Datos Vitales SOS)
 --%>
 
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="logica.Cita" %>
+<%@ page import="logica.DatosVitales" %> 
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.util.Locale" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
-<%@ page import="java.util.List" %>
 <%
-    // TRUCO DE SEGURIDAD:
-    // Si entramos aquí y la lista de citas está vacía (null), significa que
-    // no hemos pasado por el Servlet (el camarero).
-    // Así que obligamos al navegador a ir al Servlet primero.
+    // 1. SEGURIDAD: Si entramos directo, redirigir al Servlet
     if (request.getAttribute("misCitas") == null) {
         response.sendRedirect("CitasServlet");
         return;
     }
+
+    // 2. RECUPERAR CITAS (Tu código existente)
+    List<Cita> listaPendientes = (List<Cita>) request.getAttribute("misCitas");
+    List<Cita> listaHistorial = (List<Cita>) request.getAttribute("historialCitas");
+
+    if(listaPendientes == null) listaPendientes = new ArrayList<>();
+    if(listaHistorial == null) listaHistorial = new ArrayList<>();
+
+    // 3. RECUPERAR DATOS VITALES (NUEVO)
+    DatosVitales vAbuelo = (DatosVitales) request.getAttribute("vitalAbuelo");
+    DatosVitales vAbuela = (DatosVitales) request.getAttribute("vitalAbuela");
+    
+    // Protección para que no falle si es la primera vez (creamos datos vacíos)
+    if(vAbuelo == null) vAbuelo = new DatosVitales("Abuelo", "Sin datos", "Sin datos", "-", "Ninguna", "Sin datos");
+    if(vAbuela == null) vAbuela = new DatosVitales("Abuela", "Sin datos", "Sin datos", "-", "Ninguna", "Sin datos");
 %>
 
 <!DOCTYPE html>
@@ -33,8 +45,21 @@
     <title>Mis Citas Médicas - Vista Familiar</title>
     <style>
         /* Estilos Base Pastel */
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%); margin: 0; padding: 15px; color: #444; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%); margin: 0; padding: 15px; color: #444; padding-bottom: 80px; }
         h1 { text-align: center; color: #546e7a; font-size: 1.8em; margin-bottom: 20px; }
+
+        /* ESTILOS BOTÓN SOS (NUEVO) */
+        @keyframes palpito { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .btn-sos {
+            background-color: #d32f2f; color: white; border: none; padding: 15px 30px; 
+            font-size: 1.1em; border-radius: 50px; cursor: pointer; 
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4); font-weight: bold;
+            animation: palpito 2s infinite; display: block; margin: 0 auto 20px auto;
+        }
+        
+        /* Estilos Ficha Vital (NUEVO) */
+        .dato-box { padding: 10px; border-bottom: 1px solid #eee; font-size: 1.1em; }
+        .alert { background-color: #ffebee; color: #c62828; font-weight: bold; border: 1px solid #ef9a9a; border-radius: 5px; }
 
         /* Botonera */
         .botonera { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
@@ -70,12 +95,12 @@
         .has-cita-abuela { background: #f8bbd0 !important; border-color: #f48fb1 !important; color: #880e4f !important; font-weight: bold; }
         .has-cita-ambos { background: linear-gradient(135deg, #bbdefb 50%, #f8bbd0 50%) !important; border-color: #ce93d8 !important; font-weight: bold; }
 
-        /* Modal de Detalles */
+        /* Modales Generales */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-contenido { background: white; margin: 20% auto; padding: 25px; border-radius: 25px; width: 85%; max-width: 400px; position: relative; }
+        .modal-contenido { background: white; margin: 15% auto; padding: 25px; border-radius: 25px; width: 85%; max-width: 400px; position: relative; max-height: 80vh; overflow-y: auto; }
         .cerrar-modal { float: right; font-size: 28px; font-weight: bold; cursor: pointer; color: #999; }
 
-        /* Estilos del Historial (NUEVO) */
+        /* Historial */
         .historial-container { margin-top: 40px; text-align: center; padding-bottom: 40px; }
         details summary {
             background-color: #78909c; color: white; padding: 12px 25px; border-radius: 20px;
@@ -86,29 +111,20 @@
         .tabla-historial th { background-color: #cfd8dc; padding: 10px; text-align: left; }
         .tabla-historial td { border-bottom: 1px solid #eee; padding: 10px; }
         
-        /* NUEVO: Botón de Medicación */
+        /* Botón Medicación */
         .btn-medicina {
-            background-color: #00897b; /* Color verde azulado */
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 50px;
-            font-size: 1.2em;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
-            display: inline-block;
-            border: 2px solid white;
+            background-color: #00897b; color: white; padding: 15px 30px; text-decoration: none;
+            border-radius: 50px; font-size: 1.2em; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s; display: inline-block; border: 2px solid white;
         }
-        .btn-medicina:hover {
-            transform: scale(1.05);
-            background-color: #00695c;
-        }
+        .btn-medicina:hover { transform: scale(1.05); background-color: #00695c; }
     </style>
 </head>
 <body onload="actualizarCalendario()">
 
     <h1>📅 Mis Citas Médicas</h1>
+
+    <button onclick="abrirVitales()" class="btn-sos">🆘 DATOS DE URGENCIA</button>
 
     <div class="botonera">
         <a href="index.html" class="btn-nav btn-logout">🔒 Cerrar</a>
@@ -122,43 +138,74 @@
             <div id="mes-anio" style="font-weight: bold; font-size: 1.2em;"></div>
             <button class="btn-nav" style="padding: 5px 15px" onclick="cambiarMes(1)">▶</button>
         </div>
-        <div class="calendar-grid" id="grid-dias">
-            <div style="font-weight: bold; color: #88a0a8;">L</div><div style="font-weight: bold; color: #88a0a8;">M</div>
-            <div style="font-weight: bold; color: #88a0a8;">X</div><div style="font-weight: bold; color: #88a0a8;">J</div>
-            <div style="font-weight: bold; color: #88a0a8;">V</div><div style="font-weight: bold; color: #88a0a8;">S</div>
-            <div style="font-weight: bold; color: #88a0a8;">D</div>
-        </div>
+        <div class="calendar-grid" id="grid-dias"></div>
     </div>
 
     <div id="modalCita" class="modal">
         <div class="modal-contenido">
-            <span class="cerrar-modal" onclick="cerrarModal()">&times;</span>
+            <span class="cerrar-modal" onclick="cerrarModalCita()">&times;</span>
             <h2 id="modal-titulo" style="margin-top: 0; color: #546e7a;">Citas del día</h2>
             <div id="modal-detalle"></div>
         </div>
     </div>
 
+    <div id="modalVitales" class="modal">
+        <div class="modal-contenido" style="border: 4px solid #d32f2f;">
+            <span class="cerrar-modal" onclick="cerrarVitales()">&times;</span>
+            <h2 style="color: #d32f2f; text-align: center;">⚠️ Ficha Vital ⚠️</h2>
+            
+            <div style="display:flex; justify-content:center; gap:10px; margin-bottom:15px;">
+                <button onclick="verFicha('fichaAbuelo')" class="btn-nav" style="background:#e3f2fd;">👴 Abuelo</button>
+                <button onclick="verFicha('fichaAbuela')" class="btn-nav" style="background:#fce4ec;">👵 Abuela</button>
+            </div>
+
+            <div id="fichaAbuelo" class="ficha-info">
+                <div class="dato-box"><strong>SIP:</strong> <%= vAbuelo.getSip() %></div>
+                <div class="dato-box"><strong>DNI:</strong> <%= vAbuelo.getDni() %></div>
+                <div class="dato-box"><strong>Sangre:</strong> <%= vAbuelo.getSangre() %></div>
+                <div class="dato-box alert"><strong>ALERGIAS:</strong> <%= vAbuelo.getAlergias() %></div>
+                <div class="dato-box"><strong>📞:</strong> <a href="tel:<%= vAbuelo.getContacto() %>"><%= vAbuelo.getContacto() %></a></div>
+                <br>
+                <button onclick="editarVitales('Abuelo')" style="width:100%; padding:10px; cursor:pointer;">✏️ Editar Datos</button>
+            </div>
+
+            <div id="fichaAbuela" class="ficha-info" style="display:none;">
+                <div class="dato-box"><strong>SIP:</strong> <%= vAbuela.getSip() %></div>
+                <div class="dato-box"><strong>DNI:</strong> <%= vAbuela.getDni() %></div>
+                <div class="dato-box"><strong>Sangre:</strong> <%= vAbuela.getSangre() %></div>
+                <div class="dato-box alert"><strong>ALERGIAS:</strong> <%= vAbuela.getAlergias() %></div>
+                <div class="dato-box"><strong>📞:</strong> <a href="tel:<%= vAbuela.getContacto() %>"><%= vAbuela.getContacto() %></a></div>
+                <br>
+                <button onclick="editarVitales('Abuela')" style="width:100%; padding:10px; cursor:pointer;">✏️ Editar Datos</button>
+            </div>
+
+            <div id="formVitales" style="display:none; margin-top:20px; border-top:1px solid #ccc; padding-top:10px;">
+                <h3 style="text-align:center;">Actualizar Datos</h3>
+                <form action="DatosServlet" method="POST">
+                    <input type="hidden" name="usuario" id="editUsuario">
+                    <label>SIP:</label><input type="text" name="sip" style="width:100%; margin-bottom:5px;">
+                    <label>DNI:</label><input type="text" name="dni" style="width:100%; margin-bottom:5px;">
+                    <label>Sangre:</label><input type="text" name="sangre" style="width:100%; margin-bottom:5px;">
+                    <label>Alergias:</label><input type="text" name="alergias" style="width:100%; margin-bottom:5px; border:1px solid red;">
+                    <label>Tel. Emergencia:</label><input type="text" name="contacto" style="width:100%; margin-bottom:10px;">
+                    <button type="submit" style="background:#28a745; color:white; width:100%; padding:10px; border:none; cursor:pointer;">💾 Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="contenedor-citas">
         <%
-            // 1. RECUPERAR DATOS DEL SERVLET (Ya no hacemos SQL aquí)
-            List<Cita> listaPendientes = (List<Cita>) request.getAttribute("misCitas");
-            List<Cita> listaHistorial = (List<Cita>) request.getAttribute("historialCitas");
-
-            // Si se accede directo al JSP sin pasar por Servlet, evitamos error null
-            if(listaPendientes == null) listaPendientes = new ArrayList<>();
-            if(listaHistorial == null) listaHistorial = new ArrayList<>();
-
-            // Variables para construir HTML
+            // Preparamos datos visuales de las citas
             StringBuilder htmlAbuelo = new StringBuilder();
             StringBuilder htmlAbuela = new StringBuilder();
             StringBuilder jsData = new StringBuilder("[");
             
             DateTimeFormatter fmtBonito = DateTimeFormatter.ofPattern("dd MMMM yyyy", new Locale("es", "ES"));
 
-            // 2. PROCESAR LISTA DE PENDIENTES (Para las tarjetas visibles)
+            // Tarjetas (Solo Pendientes)
             for(Cita c : listaPendientes) {
                 String fechaBonita = c.getFecha().toLocalDate().format(fmtBonito);
-                
                 String card = "<div class='cita-card'>" +
                               "<div class='cita-fecha'>" + fechaBonita + " - " + c.getHora() + "</div>" +
                               "<div>📍 " + c.getLugar() + "</div>" +
@@ -170,7 +217,7 @@
                 else if(c.getUsuario().equalsIgnoreCase("Abuela")) htmlAbuela.append(card);
             }
 
-            // 3. PROCESAR CALENDARIO (Pendientes + Historial para que el calendario tenga todo)
+            // Datos Calendario (Pendientes + Historial)
             List<Cita> todasLasCitas = new ArrayList<>(listaPendientes);
             todasLasCitas.addAll(listaHistorial);
             boolean primero = true;
@@ -187,7 +234,7 @@
             }
             jsData.append("]");
         %>
-        
+
         <div class="panel-abuelo">
             <div class="titulo-usuario">👴 Citas del Abuelo</div>
             <div><%= htmlAbuelo.length() > 0 ? htmlAbuelo.toString() : "<p>No hay citas próximas.</p>" %></div>
@@ -204,33 +251,18 @@
             <summary>📂 Ver Registro de Citas Anteriores</summary>
             
             <table class="tabla-historial">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Quién</th>
-                        <th>Médico</th>
-                        <th>Lugar</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Fecha</th><th>Quién</th><th>Médico</th><th>Lugar</th></tr></thead>
                 <tbody>
-                    <% 
-                    if(listaHistorial.isEmpty()) { 
-                    %>
+                    <% if(listaHistorial.isEmpty()) { %>
                         <tr><td colspan="4" style="text-align:center;">No hay historial registrado.</td></tr>
-                    <% 
-                    } else {
-                        for(Cita h : listaHistorial) { 
-                    %>
+                    <% } else { for(Cita h : listaHistorial) { %>
                         <tr>
                             <td><%= h.getFecha().toString() %></td>
                             <td><%= h.getUsuario() %></td>
                             <td><%= h.getMedico() %></td>
                             <td><%= h.getLugar() %></td>
                         </tr>
-                    <% 
-                        } 
-                    } 
-                    %>
+                    <% }} %>
                 </tbody>
             </table>
         </details>
@@ -241,10 +273,9 @@
             💊 GESTIONAR MEDICACIÓN
         </a>
     </div>
+
     <script>
-        // Los datos ahora vienen de la lista combinada (pasado + futuro)
         const citasData = <%= jsData.toString() %>;
-        
         let fechaActual = new Date();
         const nombresMeses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
 
@@ -261,7 +292,15 @@
         function actualizarCalendario() {
             const grid = document.getElementById("grid-dias");
             const label = document.getElementById("mes-anio");
-            while (grid.children.length > 7) grid.removeChild(grid.lastChild);
+            grid.innerHTML = ""; // Limpiamos todo
+            
+            // Re-creamos cabeceras días
+            const headers = ["L","M","X","J","V","S","D"];
+            headers.forEach(h => {
+               const div = document.createElement("div");
+               div.style.fontWeight="bold"; div.style.color="#88a0a8"; div.innerText=h;
+               grid.appendChild(div);
+            });
             
             const mes = fechaActual.getMonth();
             const anio = fechaActual.getFullYear();
@@ -311,8 +350,35 @@
             modal.style.display = "block";
         }
 
-        function cerrarModal() { document.getElementById("modalCita").style.display = "none"; }
-        window.onclick = (e) => { if(e.target == document.getElementById("modalCita")) cerrarModal(); }
+        // --- FUNCIONES ANTIGUAS Y NUEVAS UNIFICADAS ---
+        function cerrarModalCita() { document.getElementById("modalCita").style.display = "none"; }
+        
+        function abrirVitales() { document.getElementById("modalVitales").style.display = "block"; }
+        
+        function cerrarVitales() { 
+            document.getElementById("modalVitales").style.display = "none"; 
+            document.getElementById("formVitales").style.display = "none";
+        }
+
+        function verFicha(id) {
+            document.getElementById("fichaAbuelo").style.display = "none";
+            document.getElementById("fichaAbuela").style.display = "none";
+            document.getElementById(id).style.display = "block";
+            document.getElementById("formVitales").style.display = "none";
+        }
+
+        function editarVitales(usuario) {
+            document.getElementById("formVitales").style.display = "block";
+            document.getElementById("editUsuario").value = usuario;
+            // Scroll automático para ver el formulario
+            const modalContent = document.querySelector('#modalVitales .modal-contenido');
+            modalContent.scrollTop = modalContent.scrollHeight;
+        }
+
+        window.onclick = (e) => { 
+            if(e.target == document.getElementById("modalCita")) cerrarModalCita(); 
+            if(e.target == document.getElementById("modalVitales")) cerrarVitales();
+        }
     </script>
 </body>
 </html>
