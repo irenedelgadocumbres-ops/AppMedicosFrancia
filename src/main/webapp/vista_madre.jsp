@@ -87,7 +87,7 @@
             🐶 NALI (Vet, Vacunas)
         </a>
         
-        <a href="#" class="boton-grande btn-compra">
+        <a href="CompraServlet" class="boton-grande btn-compra">
             🛒 LISTA COMPRA
         </a>
     </div>
