@@ -1,15 +1,30 @@
 <%-- 
     Document   : vista_mayores
     Created on : 20 dic 2025, 12:49:45
-    Author     : Asus
+    Updated on : 24 ene 2026 (Separación Historial)
+    Author     : Asus & Gemini
 --%>
 
-
-<%@ page import="java.sql.*" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="logica.Cita" %>
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.util.Locale" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+
+<%@ page import="java.util.List" %>
+<%
+    // TRUCO DE SEGURIDAD:
+    // Si entramos aquí y la lista de citas está vacía (null), significa que
+    // no hemos pasado por el Servlet (el camarero).
+    // Así que obligamos al navegador a ir al Servlet primero.
+    if (request.getAttribute("misCitas") == null) {
+        response.sendRedirect("CitasServlet");
+        return;
+    }
+%>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -28,17 +43,14 @@
         .btn-logout { background-color: #ffcdd2; color: #b71c1c; }
         
         .btn-admin {
-                    background-color: #28a745; /* Color verde para "añadir" */
-                    color: white;
-                    text-decoration: none;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-        .btn-admin:hover {
-                          background-color: #218838; /* Verde un poco más oscuro al pasar el ratón */
-                    }
+            background-color: #28a745; 
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-admin:hover { background-color: #218838; }
 
         /* Paneles de Citas */
         .contenedor-citas { display: flex; flex-direction: column; gap: 20px; }
@@ -62,6 +74,17 @@
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
         .modal-contenido { background: white; margin: 20% auto; padding: 25px; border-radius: 25px; width: 85%; max-width: 400px; position: relative; }
         .cerrar-modal { float: right; font-size: 28px; font-weight: bold; cursor: pointer; color: #999; }
+
+        /* Estilos del Historial (NUEVO) */
+        .historial-container { margin-top: 40px; text-align: center; padding-bottom: 40px; }
+        details summary {
+            background-color: #78909c; color: white; padding: 12px 25px; border-radius: 20px;
+            cursor: pointer; font-size: 1.1em; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        details[open] summary { background-color: #546e7a; }
+        .tabla-historial { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; font-size: 0.9em; }
+        .tabla-historial th { background-color: #cfd8dc; padding: 10px; text-align: left; }
+        .tabla-historial td { border-bottom: 1px solid #eee; padding: 10px; }
     </style>
 </head>
 <body onload="actualizarCalendario()">
@@ -69,9 +92,9 @@
     <h1>📅 Mis Citas Médicas</h1>
 
     <div class="botonera">
-        <a href="index.html" class="btn-nav btn-logout">🔒 Cerrar Sesión</a>
+        <a href="index.html" class="btn-nav btn-logout">🔒 Cerrar</a>
         <button class="btn-nav btn-cal" onclick="toggleCalendario()">Ver Calendario</button>
-        <a href="admin_panel.jsp" class="btn-nav btn-admin">➕ Nueva Cita</a>
+        <a href="admin_panel.jsp" class="btn-nav btn-admin">➕ Nueva</a>
     </div>
 
     <div id="seccion-calendario">
@@ -98,67 +121,106 @@
 
     <div class="contenedor-citas">
         <%
-            String dbURL = "jdbc:postgresql://aws-1-eu-west-3.pooler.supabase.com:5432/postgres?sslmode=require&prepareThreshold=0";
-            String dbUser = "postgres.amzippkmiwiymeeeuono";
-            String dbPass = "Abuelos2025App"; // Credencial mantenida de tu código
+            // 1. RECUPERAR DATOS DEL SERVLET (Ya no hacemos SQL aquí)
+            List<Cita> listaPendientes = (List<Cita>) request.getAttribute("misCitas");
+            List<Cita> listaHistorial = (List<Cita>) request.getAttribute("historialCitas");
 
+            // Si se accede directo al JSP sin pasar por Servlet, evitamos error null
+            if(listaPendientes == null) listaPendientes = new ArrayList<>();
+            if(listaHistorial == null) listaHistorial = new ArrayList<>();
+
+            // Variables para construir HTML
             StringBuilder htmlAbuelo = new StringBuilder();
             StringBuilder htmlAbuela = new StringBuilder();
             StringBuilder jsData = new StringBuilder("[");
             
-            // Formateador para la lista (ej: 15 junio 2026)
             DateTimeFormatter fmtBonito = DateTimeFormatter.ofPattern("dd MMMM yyyy", new Locale("es", "ES"));
 
-            try {
-                Class.forName("org.postgresql.Driver");
-                Connection conn = DriverManager.getConnection(dbURL, dbUser, dbPass);
-                Statement st = conn.createStatement();
-                ResultSet rs = st.executeQuery("SELECT * FROM citas ORDER BY fecha ASC, hora ASC");
+            // 2. PROCESAR LISTA DE PENDIENTES (Para las tarjetas visibles)
+            for(Cita c : listaPendientes) {
+                String fechaBonita = c.getFecha().toLocalDate().format(fmtBonito);
+                
+                String card = "<div class='cita-card'>" +
+                              "<div class='cita-fecha'>" + fechaBonita + " - " + c.getHora() + "</div>" +
+                              "<div>📍 " + c.getLugar() + "</div>" +
+                              "<div>⚕️ Médico: " + c.getMedico() + "</div>" +
+                              "<div>📝 " + (c.getObservaciones() != null ? c.getObservaciones() : "") + "</div>" +
+                              "</div>";
 
-                boolean primero = true;
-                while(rs.next()){
-                    String fechaISO = rs.getString("fecha");
-                    LocalDate fechaObj = rs.getDate("fecha").toLocalDate();
-                    String fechaBonita = fechaObj.format(fmtBonito);
-                    
-                    String usuario = rs.getString("usuario");
-                    String card = "<div class='cita-card'>" +
-                                  "<div class='cita-fecha'>" + fechaBonita + " - " + rs.getString("hora") + "</div>" +
-                                  "<div>📍 " + rs.getString("lugar") + "</div>" +
-                                  "<div>⚕️ Médico: " + rs.getString("medico") + "</div>" +
-                                  "<div>📝 " + (rs.getString("observaciones") != null ? rs.getString("observaciones") : "") + "</div>" +
-                                  "</div>";
+                if(c.getUsuario().equalsIgnoreCase("Abuelo")) htmlAbuelo.append(card);
+                else if(c.getUsuario().equalsIgnoreCase("Abuela")) htmlAbuela.append(card);
+            }
 
-                    if(usuario.equalsIgnoreCase("Abuelo")) htmlAbuelo.append(card);
-                    else if(usuario.equalsIgnoreCase("Abuela")) htmlAbuela.append(card);
-
-                    if(!primero) jsData.append(",");
-                    jsData.append("{fecha:'").append(fechaISO)
-                          .append("', usuario:'").append(usuario)
-                          .append("', hora:'").append(rs.getString("hora"))
-                          .append("', lugar:'").append(rs.getString("lugar"))
-                          .append("', medico:'").append(rs.getString("medico"))
-                          .append("', obs:'").append(rs.getString("observaciones") != null ? rs.getString("observaciones") : "").append("'}");
-                    primero = false;
-                }
-                conn.close();
-            } catch(Exception e) { out.println("Error: " + e.getMessage()); }
+            // 3. PROCESAR CALENDARIO (Pendientes + Historial para que el calendario tenga todo)
+            List<Cita> todasLasCitas = new ArrayList<>(listaPendientes);
+            todasLasCitas.addAll(listaHistorial);
+            boolean primero = true;
+            
+            for(Cita c : todasLasCitas) {
+                if(!primero) jsData.append(",");
+                jsData.append("{fecha:'").append(c.getFecha().toString())
+                      .append("', usuario:'").append(c.getUsuario())
+                      .append("', hora:'").append(c.getHora())
+                      .append("', lugar:'").append(c.getLugar())
+                      .append("', medico:'").append(c.getMedico())
+                      .append("', obs:'").append(c.getObservaciones() != null ? c.getObservaciones().replace("\n", " ") : "").append("'}");
+                primero = false;
+            }
             jsData.append("]");
         %>
         
         <div class="panel-abuelo">
             <div class="titulo-usuario">👴 Citas del Abuelo</div>
-            <div><%= htmlAbuelo.length() > 0 ? htmlAbuelo.toString() : "<p>No hay citas.</p>" %></div>
+            <div><%= htmlAbuelo.length() > 0 ? htmlAbuelo.toString() : "<p>No hay citas próximas.</p>" %></div>
         </div>
 
         <div class="panel-abuela">
             <div class="titulo-usuario">👵 Citas de la Abuela</div>
-            <div><%= htmlAbuela.length() > 0 ? htmlAbuela.toString() : "<p>No hay citas.</p>" %></div>
+            <div><%= htmlAbuela.length() > 0 ? htmlAbuela.toString() : "<p>No hay citas próximas.</p>" %></div>
         </div>
     </div>
 
+    <div class="historial-container">
+        <details>
+            <summary>📂 Ver Registro de Citas Anteriores</summary>
+            
+            <table class="tabla-historial">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Quién</th>
+                        <th>Médico</th>
+                        <th>Lugar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                    if(listaHistorial.isEmpty()) { 
+                    %>
+                        <tr><td colspan="4" style="text-align:center;">No hay historial registrado.</td></tr>
+                    <% 
+                    } else {
+                        for(Cita h : listaHistorial) { 
+                    %>
+                        <tr>
+                            <td><%= h.getFecha().toString() %></td>
+                            <td><%= h.getUsuario() %></td>
+                            <td><%= h.getMedico() %></td>
+                            <td><%= h.getLugar() %></td>
+                        </tr>
+                    <% 
+                        } 
+                    } 
+                    %>
+                </tbody>
+            </table>
+        </details>
+    </div>
+
     <script>
+        // Los datos ahora vienen de la lista combinada (pasado + futuro)
         const citasData = <%= jsData.toString() %>;
+        
         let fechaActual = new Date();
         const nombresMeses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
 
