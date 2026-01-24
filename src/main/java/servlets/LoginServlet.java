@@ -27,6 +27,9 @@ public class LoginServlet extends HttpServlet {
             // AQUÍ CREAREMOS EL NUEVO SERVLET DE MAMÁ MÁS ADELANTE
             // De momento la mandamos a una página en construcción
             response.sendRedirect("vista_madre.jsp"); 
+        
+        } else if ("tati".equals(clave)) { // <--- NUEVO BLOQUE PARA TATI
+            response.sendRedirect("vista_tati.jsp");
             
         } else {
             // Contraseña incorrecta
