@@ -196,6 +196,13 @@
                 </table>
             </details>
         </div>
+                    <% if("Medico".equals(tipo)) { %>
+    <div style="text-align: center; margin-bottom: 25px;">
+        <a href="MedicacionMadreServlet" style="background: #e91e63; color: white; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; display: inline-block; box-shadow: 0 4px 10px rgba(233,30,99,0.3);">
+            💊 GESTIONAR MI MEDICACIÓN
+        </a>
+    </div>
+<% } %>
     </div>
 </body>
 </html>
