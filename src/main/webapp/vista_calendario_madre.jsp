@@ -50,6 +50,8 @@
         /* COLORES */
         .c-CITA { background-color: #e91e63; }      /* Rosa Fuerte */
         .c-FARMACIA { background-color: #00897b; }  /* Verde Farmacia */
+        .c-HOGAR { background-color: #d32f2f; }     /* Rojo Teja (NUEVO) */
+
 
         /* CALENDARIO */
         .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -74,8 +76,9 @@
         <h1>📅 Agenda de Mamá</h1>
 
         <div class="leyenda">
-            <div class="leyenda-item"><span class="dot c-CITA"></span> Citas</div>
+            <div class="leyenda-item"><span class="dot c-CITA"></span> Medico</div>
             <div class="leyenda-item"><span class="dot c-FARMACIA"></span> Farmacia</div>
+            <div class="leyenda-item"><span class="dot c-HOGAR"></span> Coche/Casa</div> </div>
         </div>
 
         <div class="cal-header">

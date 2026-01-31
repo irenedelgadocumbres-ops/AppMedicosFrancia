@@ -42,7 +42,7 @@
         
     } else if(tipo.equals("Cuidados")) {
         titulo = "Peluquería y Cuidados"; colorPrincipal = "#9c27b0";
-        opciones = new String[]{"Peluquería", "Manicura/Uñas", "Pedicura", "Masaje", "Esteticista", "Depilación", "Otro"};
+        opciones = new String[]{"Peluquería", "Manicura/Uñas", "Pedicura", "Masaje", "Esteticista", "Laser", "Otro"};
         lugares = new String[]{"Peluquería habitual", "Centro Estética", "Casa", "Otro"};
 
     } else if(tipo.equals("Nali")) {

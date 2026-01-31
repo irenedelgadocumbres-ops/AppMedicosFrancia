@@ -31,32 +31,28 @@ public class CalendarioMadreServlet extends HttpServlet {
             Connection conn = DriverManager.getConnection(dbURL, dbUser, dbPass);
             Statement st = conn.createStatement();
 
-            // 1. OBTENER CITAS MÉDICAS (Tabla citas_madre)
-            // Asumimos que la tabla se llama 'citas_madre' y tiene columnas 'fecha' y 'titulo'
-            // Si tu tabla se llama distinto (ej: agenda_madre), cámbialo aquí.
-            ResultSet rsCitas = st.executeQuery("SELECT fecha, titulo, hora FROM citas_madre");
+            // 1. CITAS MÉDICAS (Puntos Rosas)
+            ResultSet rsCitas = st.executeQuery("SELECT fecha, titulo, hora FROM agenda_madre");
             while(rsCitas.next()) {
                 String texto = "🩺 " + rsCitas.getString("titulo") + " (" + rsCitas.getString("hora") + ")";
-                listaEventos.add(new EventoMadre(
-                    rsCitas.getDate("fecha"), 
-                    texto, 
-                    "CITA"
-                ));
+                listaEventos.add(new EventoMadre(rsCitas.getDate("fecha"), texto, "CITA"));
             }
 
-            // 2. OBTENER AVISOS FARMACIA (Tabla farmacia_madre)
+            // 2. FARMACIA (Puntos Verdes)
             ResultSet rsFarma = st.executeQuery("SELECT proxima_recogida FROM farmacia_madre WHERE proxima_recogida IS NOT NULL");
             while(rsFarma.next()) {
-                listaEventos.add(new EventoMadre(
-                    rsFarma.getDate("proxima_recogida"), 
-                    "🏥 Toca ir a la Farmacia", 
-                    "FARMACIA"
-                ));
+                listaEventos.add(new EventoMadre(rsFarma.getDate("proxima_recogida"), "🏥 Ir a la Farmacia", "FARMACIA"));
+            }
+
+            // 3. HOGAR Y COCHES (Puntos Rojos) - NUEVO BLOQUE
+            ResultSet rsHogar = st.executeQuery("SELECT fecha_limite, categoria, concepto FROM gestion_madre WHERE fecha_limite IS NOT NULL");
+            while(rsHogar.next()) {
+                String texto = "🏠 " + rsHogar.getString("categoria") + ": " + rsHogar.getString("concepto");
+                listaEventos.add(new EventoMadre(rsHogar.getDate("fecha_limite"), texto, "HOGAR"));
             }
             
             conn.close();
 
-            // Enviamos la lista mezclada al JSP
             request.setAttribute("listaEventos", listaEventos);
             request.getRequestDispatcher("vista_calendario_madre.jsp").forward(request, response);
 

@@ -90,6 +90,10 @@
         <a href="CompraServlet" class="boton-grande btn-compra">
             🛒 LISTA COMPRA
         </a>
+        
+        <a href="HogarMadreServlet" class="boton-grande" style="background: linear-gradient(to right, #ef5350, #d32f2f);">
+    🏠 GESTIÓN CASA
+</a>
     </div>
     
     <a href="index.html" class="btn-salir">🔒 Cerrar Sesión</a>

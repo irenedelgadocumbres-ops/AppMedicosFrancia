@@ -43,15 +43,27 @@
         <div class="form-box">
             <form action="CompraServlet" method="POST">
                 <input type="text" name="producto" placeholder="¿Qué hay que comprar?" required>
-                <select name="tienda">
-                    <option value="🏠 MERCADONA">🏠 Mercadona</option>
-                    <option value="🏠 LIDL / ALDI">🏠 Lidl / Aldi</option>
-                    <option value="🏠 CARREFOUR">🏠 Carrefour</option>
-                    <option value="🍎 FRUTERÍA">🍎 Frutería</option>
-                    <option value="💊 FARMACIA">💊 Farmacia</option>
-                    <option value="🥩 CARNICERÍA">🥩 Carnicería</option>
-                    <option value="📦 OTROS">📦 Otros</option>
-                </select>
+                <select name="tienda" required>
+    <option value="" disabled selected>-- Elige tienda --</option>
+    
+    <option value="🏠 MERCADONA">🏠 Mercadona</option>
+    <option value="🏠 LIDL">🏠 Lidl</option>
+    <option value="🏠 ALDI">🏠 Aldi</option>
+    <option value="🏠 CARREFOUR">🏠 Carrefour</option>
+    <option value="🔴 DIA">🔴 Dia</option>
+    <option value="🟡 AHORRA MAS">🟡 Ahorra Más</option>
+    <option value="🕊️ ALCAMPO">🕊️ Alcampo</option>
+    <option value="🛒 FAMILY CASH">🛒 Family Cash</option>
+    <option value="🛍️ BM">🛍️ BM Supermercados</option>
+    <option value="📦 COSTCO">📦 Costco</option>
+    
+    <option value="🥝 KIWI">🥝 Kiwi</option>
+    <option value="💊 FARMACIA">💊 Farmacia</option>
+    
+    <option value="🍎 FRUTERÍA">🍎 Frutería / Mercado</option>
+    <option value="🥩 CARNICERÍA">🥩 Carnicería</option>
+    <option value="📦 OTROS">📦 Otros</option>
+</select>
                 <button type="submit" class="btn-add">Añadir a la lista</button>
             </form>
         </div>
