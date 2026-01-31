@@ -16,31 +16,39 @@
 
     List<CitaMadre> pendientes = (List<CitaMadre>) request.getAttribute("listaPendientes");
     List<CitaMadre> historial = (List<CitaMadre>) request.getAttribute("listaHistorial");
-    
-    // Objeto para editar
     CitaMadre edit = (CitaMadre) request.getAttribute("citaEditar");
 
     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMMM yyyy", new Locale("es", "ES"));
 
-    // CONFIGURACIÓN VISUAL
-    String titulo = ""; String colorFondo = ""; String colorPrincipal = ""; String icono = "";
+    String titulo = ""; String colorPrincipal = ""; 
     String[] opciones = {}; 
+    String[] lugares = {}; // Nuevo array para lugares
 
     if(tipo.equals("Medico")) {
-        titulo = "Mis Médicos"; icono = "🩺";
-        colorFondo = "linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)";
-        colorPrincipal = "#e91e63"; 
-        opciones = new String[]{"Médico Cabecera", "Dentista", "Oculista", "Ginecólogo", "Dermatólogo", "Traumatólogo", "Análisis Sangre", "Otro"};
+        titulo = "Mis Médicos"; colorPrincipal = "#e91e63"; 
+        // LISTA ACTUALIZADA CON EMOTICONOS
+        opciones = new String[]{
+            "Médico Cabecera 🩺", "Enfermera 💉", "Digestivo 🤢", "Análisis Sangre 🩸", 
+            "Eco 🖥️", "Mamografía 🍈", "Radiografía 💀", "TAC / Resonancia ☢️", 
+            "Cardiólogo ❤️", "Podólogo 🦶", "Dentista 🦷", "Oculista 👁️", 
+            "Ginecólogo 🌸", "Dermatólogo 🧴", "Traumatólogo 🦴", "Otro 📝"
+        };
+        // LISTA DE LUGARES
+        lugares = new String[]{
+            "Afidea", "Ruber Internacional", "Severo Ochoa", 
+            "Hosp. Juan Carlos I Móstoles", "Pedroches", "Centro Salud", 
+            "Fisio / La Fortuna", "Otro"
+        };
+        
     } else if(tipo.equals("Cuidados")) {
-        titulo = "Peluquería y Cuidados"; icono = "💅";
-        colorFondo = "linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)";
-        colorPrincipal = "#9c27b0";
+        titulo = "Peluquería y Cuidados"; colorPrincipal = "#9c27b0";
         opciones = new String[]{"Peluquería", "Manicura/Uñas", "Pedicura", "Masaje", "Esteticista", "Depilación", "Otro"};
+        lugares = new String[]{"Peluquería habitual", "Centro Estética", "Casa", "Otro"};
+
     } else if(tipo.equals("Nali")) {
-        titulo = "Cosas de Nali"; icono = "🐶";
-        colorFondo = "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)";
-        colorPrincipal = "#4caf50";
+        titulo = "Cosas de Nali"; colorPrincipal = "#4caf50";
         opciones = new String[]{"Veterinario (Revisión)", "Vacunas", "Desparasitación", "Peluquería Canina", "Comprar Pienso", "Urgencia", "Otro"};
+        lugares = new String[]{"Veterinario Habitual", "Tienda Animales", "Peluquería Canina", "Otro"};
     }
 %>
 
@@ -51,45 +59,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= titulo %></title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: <%= colorFondo %>; padding: 20px; color: #444; min-height: 100vh;}
+        body { font-family: 'Segoe UI', sans-serif; background: #fce4ec; padding: 20px; color: #444; min-height: 100vh;}
         .container { max-width: 800px; margin: 0 auto; }
         
         h1 { text-align: center; color: <%= colorPrincipal %>; text-transform: uppercase; }
-        .btn-volver { background-color: white; color: <%= colorPrincipal %>; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; display: inline-block; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-volver { background-color: white; color: <%= colorPrincipal %>; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; display: inline-block; margin-bottom: 20px; }
 
-        /* FORMULARIO */
         .form-box { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; border-top: 5px solid <%= colorPrincipal %>; }
         .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
         input, select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; flex: 1; font-size: 1em; }
-        button { background-color: <%= colorPrincipal %>; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: transform 0.2s; width: 100%; }
-        button:hover { transform: scale(1.02); }
+        button { background-color: <%= colorPrincipal %>; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; }
 
-        /* TARJETAS PENDIENTES */
-        .cita-card { background: white; border-radius: 18px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-left: 8px solid <%= colorPrincipal %>; display: flex; justify-content: space-between; align-items: flex-start; }
-        .cita-info { flex: 1; }
-        .cita-fecha { font-weight: bold; color: <%= colorPrincipal %>; font-size: 1.2em; text-transform: capitalize; }
-        .acciones { display: flex; gap: 10px; margin-left: 10px; }
-        .btn-icon { text-decoration: none; font-size: 1.3em; transition: transform 0.2s; cursor: pointer; border: none; background: none; }
-        .btn-icon:hover { transform: scale(1.2); }
+        .cita-card { background: white; border-radius: 18px; padding: 20px; margin-bottom: 15px; border-left: 8px solid <%= colorPrincipal %>; position: relative; }
+        .btn-icon { text-decoration: none; font-size: 1.3em; margin-left: 10px; }
+        .acciones { position: absolute; right: 20px; top: 20px; }
 
-        /* HISTORIAL (ESTILO RESTAURADO) */
-        .historial-container { margin-top: 40px; text-align: center; padding-bottom: 50px; }
-        details summary { background-color: #78909c; color: white; padding: 12px 25px; border-radius: 20px; cursor: pointer; font-weight: bold; margin-bottom: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
-        .tabla-historial { width: 100%; background: white; border-radius: 10px; overflow: hidden; border-collapse: collapse; font-size: 0.95em; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .tabla-historial th { background-color: #cfd8dc; padding: 12px; text-align: left; color: #455a64; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.5px; }
-        .tabla-historial td { border-bottom: 1px solid #eee; padding: 12px; vertical-align: middle; }
-        .tabla-historial tr:last-child td { border-bottom: none; }
+        /* Estilo Historial */
+        details { margin-top: 30px; text-align: center; }
+        summary { background: #90a4ae; color: white; padding: 10px 20px; border-radius: 20px; display: inline-block; cursor: pointer; }
+        table { width: 100%; background: white; margin-top: 10px; border-collapse: collapse; }
+        td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
     </style>
     <script>
-        function mostrarOtro(select) {
-            var inputOtro = document.getElementById("div_otro");
-            if (select.value === "Otro") {
-                inputOtro.style.display = "block";
-                document.getElementById("input_otro").required = true;
+        // Función genérica para mostrar campo de texto si eligen "Otro"
+        function comprobarOtro(selectObj, inputId) {
+            var input = document.getElementById(inputId);
+            if (selectObj.value.includes("Otro")) {
+                input.style.display = "block";
+                input.required = true;
+                input.value = ""; // Limpiar para que escriban
             } else {
-                inputOtro.style.display = "none";
-                document.getElementById("input_otro").required = false;
+                input.style.display = "none";
+                input.required = false;
+                // Si no es otro, copiamos el valor del select al input (oculto) por si acaso se envía
+                input.value = selectObj.value;
             }
         }
     </script>
@@ -97,12 +100,18 @@
 <body>
     <div class="container">
         <a href="vista_madre.jsp" class="btn-volver">⬅ Volver al Menú</a>
-        
-        <h1><%= icono %> <%= titulo %></h1>
+        <h1><%= titulo %></h1>
 
-        <div class="form-box" id="formulario">
+        <% if("Medico".equals(tipo)) { %>
+            <div style="text-align: center; margin-bottom: 20px; display: flex; gap: 10px; justify-content: center;">
+                <a href="MedicacionMadreServlet" style="background: <%= colorPrincipal %>; color: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; font-weight: bold;">💊 Pastillas</a>
+                <a href="FarmaciaMadreServlet" style="background: #00897b; color: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; font-weight: bold;">🏥 Farmacia (Recogida)</a>
+            </div>
+        <% } %>
+
+        <div class="form-box">
             <h3 style="margin-top:0; color: <%= colorPrincipal %>;">
-                <%= (edit != null) ? "✏️ Editando Cita" : "➕ Añadir Nuevo Evento" %>
+                <%= (edit != null) ? "✏️ Editar Cita" : "➕ Nueva Cita" %>
             </h3>
             
             <form action="AgendaMadreServlet" method="POST">
@@ -115,94 +124,65 @@
                 </div>
 
                 <div class="form-row">
-                    <select name="titulo" onchange="mostrarOtro(this)" required>
-                        <option value="" disabled selected>-- Selecciona --</option>
+                    <select id="sel_titulo" onchange="comprobarOtro(this, 'input_titulo')" required>
+                        <option value="" disabled selected>-- Especialista --</option>
                         <% for(String op : opciones) { 
-                             boolean selected = (edit != null && op.equals(edit.getTitulo()));
-                             boolean isOtro = (edit != null && !java.util.Arrays.asList(opciones).contains(edit.getTitulo()));
-                             if(op.equals("Otro") && isOtro) selected = true; 
+                             boolean selected = (edit != null && op.equals(edit.getTitulo())); 
                         %>
                             <option value="<%= op %>" <%= selected ? "selected" : "" %>><%= op %></option>
                         <% } %>
                     </select>
-                    <input type="text" name="lugar" placeholder="Lugar (Clínica, Calle...)" value="<%= (edit != null) ? edit.getLugar() : "" %>">
+                    <input type="text" id="input_titulo" name="titulo" placeholder="Escribe el nombre..." 
+                           style="display: <%= (edit != null && !java.util.Arrays.asList(opciones).contains(edit.getTitulo())) ? "block" : "none" %>;"
+                           value="<%= (edit != null) ? edit.getTitulo() : "" %>">
                 </div>
 
-                <div class="form-row" id="div_otro" style="display: <%= (edit != null && !java.util.Arrays.asList(opciones).contains(edit.getTitulo())) ? "block" : "none" %>;">
-                    <input type="text" id="input_otro" name="titulo_otro" placeholder="Escribe el título..." value="<%= (edit != null) ? edit.getTitulo() : "" %>">
+                <div class="form-row">
+                    <select id="sel_lugar" onchange="comprobarOtro(this, 'input_lugar')">
+                        <option value="" disabled selected>-- Lugar --</option>
+                        <% for(String lug : lugares) { 
+                             boolean selected = (edit != null && lug.equals(edit.getLugar())); 
+                        %>
+                            <option value="<%= lug %>" <%= selected ? "selected" : "" %>><%= lug %></option>
+                        <% } %>
+                    </select>
+                    <input type="text" id="input_lugar" name="lugar" placeholder="Escribe el lugar..." 
+                           style="display: <%= (edit != null && !java.util.Arrays.asList(lugares).contains(edit.getLugar())) ? "block" : "none" %>;"
+                           value="<%= (edit != null) ? edit.getLugar() : "" %>">
                 </div>
 
                 <div class="form-row">
                     <input type="text" name="observaciones" placeholder="Notas extra..." value="<%= (edit != null && edit.getObservaciones() != null) ? edit.getObservaciones() : "" %>">
                 </div>
                 
-                <button type="submit"><%= (edit != null) ? "💾 Guardar Cambios" : "Guardar Evento" %></button>
-                <% if(edit != null) { %>
-                    <a href="AgendaMadreServlet?tipo=<%= tipo %>" style="display:block; text-align:center; margin-top:10px; color:#666; text-decoration:none;">Cancelar Edición</a>
-                <% } %>
+                <button type="submit"><%= (edit != null) ? "💾 Guardar" : "Guardar Evento" %></button>
             </form>
         </div>
 
-        <h3 style="color: #555;">📅 Próximos Eventos</h3>
-        
-        <% if(pendientes != null && !pendientes.isEmpty()) { 
-            for(CitaMadre c : pendientes) { %>
-                <div class="cita-card">
-                    <div class="cita-info">
-                        <div class="cita-fecha"><%= c.getFecha().toLocalDate().format(fmt) %> <small>(<%= c.getHora() %>)</small></div>
-                        <div style="font-size: 1.1em;"><strong><%= c.getTitulo() %></strong></div>
-                        <div style="color: #666;">📍 <%= c.getLugar() %></div>
-                        <% if(c.getObservaciones() != null && !c.getObservaciones().isEmpty()) { %>
-                            <div style="font-style: italic; color: #888; font-size: 0.9em; margin-top: 5px;">📝 <%= c.getObservaciones() %></div>
-                        <% } %>
-                    </div>
-                    <div class="acciones">
-                        <a href="AgendaMadreServlet?tipo=<%= tipo %>&accion=editar&id=<%= c.getId() %>" class="btn-icon" title="Editar">✏️</a>
-                        <a href="AgendaMadreServlet?tipo=<%= tipo %>&accion=borrar&id=<%= c.getId() %>" class="btn-icon" style="color:#d32f2f;" onclick="return confirm('¿Borrar <%= c.getTitulo() %>?')" title="Borrar">🗑️</a>
-                    </div>
+        <% if(pendientes != null) { for(CitaMadre c : pendientes) { %>
+            <div class="cita-card">
+                <div class="acciones">
+                    <a href="AgendaMadreServlet?tipo=<%= tipo %>&accion=editar&id=<%= c.getId() %>" class="btn-icon">✏️</a>
+                    <a href="AgendaMadreServlet?tipo=<%= tipo %>&accion=borrar&id=<%= c.getId() %>" class="btn-icon" style="color:#d32f2f;" onclick="return confirm('¿Borrar?')">🗑️</a>
                 </div>
-        <% }} else { %>
-            <p style="text-align: center; color: #888;">No hay eventos pendientes.</p>
-        <% } %>
+                <div style="font-size: 1.1em; font-weight: bold; color: <%= colorPrincipal %>;"><%= c.getTitulo() %></div>
+                <div>📅 <%= c.getFecha().toLocalDate().format(fmt) %> (<%= c.getHora() %>)</div>
+                <div style="color: #666;">📍 <%= c.getLugar() %></div>
+            </div>
+        <% }} %>
 
-        <div class="historial-container">
-            <details>
-                <summary>📂 Ver Historial Anterior</summary>
-                
-                <table class="tabla-historial">
-                    <thead>
-                        <tr>
-                            <th style="width: 30%;">Fecha</th>
-                            <th style="width: 30%;">Evento</th>
-                            <th style="width: 30%;">Lugar</th>
-                            <th style="width: 10%;"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if(historial != null && !historial.isEmpty()) { 
-                            for(CitaMadre h : historial) { %>
-                            <tr>
-                                <td><%= h.getFecha().toLocalDate().format(fmt) %></td>
-                                <td><strong><%= h.getTitulo() %></strong></td>
-                                <td><%= h.getLugar() %></td>
-                                <td style="text-align: center;">
-                                    <a href="AgendaMadreServlet?tipo=<%= tipo %>&accion=borrar&id=<%= h.getId() %>" style="color:#d32f2f; text-decoration:none; font-size: 1.2em;" onclick="return confirm('¿Borrar del historial?')" title="Borrar">🗑️</a>
-                                </td>
-                            </tr>
-                        <% }} else { %>
-                            <tr><td colspan="4" style="text-align:center; padding: 20px; color: #777;">No hay historial antiguo.</td></tr>
-                        <% } %>
-                    </tbody>
-                </table>
-            </details>
-        </div>
-                    <% if("Medico".equals(tipo)) { %>
-    <div style="text-align: center; margin-bottom: 25px;">
-        <a href="MedicacionMadreServlet" style="background: #e91e63; color: white; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; display: inline-block; box-shadow: 0 4px 10px rgba(233,30,99,0.3);">
-            💊 GESTIONAR MI MEDICACIÓN
-        </a>
-    </div>
-<% } %>
+        <details>
+            <summary>📂 Ver Historial</summary>
+            <table>
+                <% if(historial != null) { for(CitaMadre h : historial) { %>
+                    <tr>
+                        <td><%= h.getFecha().toLocalDate().format(fmt) %></td>
+                        <td><strong><%= h.getTitulo() %></strong></td>
+                        <td><%= h.getLugar() %></td>
+                    </tr>
+                <% }} %>
+            </table>
+        </details>
     </div>
 </body>
 </html>
