@@ -79,6 +79,10 @@
             🩺 MÉDICOS
         </a>
         
+        <a href="TrabajoMadreServlet" class="boton-grande" style="background: linear-gradient(to right, #42a5f5, #1e88e5);">
+    💼 GESTIÓN TRABAJO
+</a>
+        
         <a href="AgendaMadreServlet?tipo=Cuidados" class="boton-grande btn-cuidados">
             💅 CUIDADOS (Pelu, Uñas)
         </a>
