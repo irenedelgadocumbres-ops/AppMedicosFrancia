@@ -12,15 +12,18 @@ public class CitaTati {
     private String especialista;
     private String lugar;
     private String observaciones;
+    private String persona; // Nuevo campo
 
-    public CitaTati(int id, Date fecha, String hora, String especialista, String lugar, String observaciones) {
+    public CitaTati(int id, Date fecha, String hora, String especialista, String lugar, String observaciones, String persona) {
         this.id = id;
         this.fecha = fecha;
         this.hora = hora;
         this.especialista = especialista;
         this.lugar = lugar;
         this.observaciones = observaciones;
+        this.persona = persona;
     }
+
     // Getters
     public int getId() { return id; }
     public Date getFecha() { return fecha; }
@@ -28,4 +31,5 @@ public class CitaTati {
     public String getEspecialista() { return especialista; }
     public String getLugar() { return lugar; }
     public String getObservaciones() { return observaciones; }
+    public String getPersona() { return persona; }
 }

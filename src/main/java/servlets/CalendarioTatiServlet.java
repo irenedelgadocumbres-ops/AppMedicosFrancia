@@ -31,33 +31,46 @@ public class CalendarioTatiServlet extends HttpServlet {
             Connection conn = DriverManager.getConnection(dbURL, dbUser, dbPass);
             Statement st = conn.createStatement();
 
-            // 1. MÉDICOS (Con hora)
-            ResultSet rs1 = st.executeQuery("SELECT fecha, especialista, lugar, hora FROM citas_tati");
+            // 1. MÉDICOS (Con Observaciones)
+            ResultSet rs1 = st.executeQuery("SELECT fecha, especialista, lugar, hora, observaciones, persona FROM citas_tati");
             while(rs1.next()) {
+                String persona = rs1.getString("persona");
+                if(persona == null) persona = "Tati";
+                
                 String titulo = "🩺 " + rs1.getString("especialista");
-                String subtitulo = rs1.getString("hora") + " - " + rs1.getString("lugar");
-                listaTotal.add(new EventoTati(rs1.getDate("fecha"), titulo, subtitulo, "MEDICO"));
+                // Juntamos Hora y Lugar en el subtítulo
+                String subtitulo = "⏰ " + rs1.getString("hora") + " | 📍 " + rs1.getString("lugar");
+                String notas = rs1.getString("observaciones");
+                
+                String tipoEvento = "MEDICO_" + persona.toUpperCase(); 
+                
+                listaTotal.add(new EventoTati(rs1.getDate("fecha"), titulo, subtitulo, notas, tipoEvento));
             }
 
-            // 2. MASCOTAS (Avisos futuros)
-            ResultSet rs2 = st.executeQuery("SELECT proxima_fecha, nombre_mascota, tipo_evento FROM mascotas_tati WHERE proxima_fecha IS NOT NULL");
+            // 2. MASCOTAS
+            ResultSet rs2 = st.executeQuery("SELECT proxima_fecha, nombre_mascota, tipo_evento, producto, observaciones FROM mascotas_tati WHERE proxima_fecha IS NOT NULL");
             while(rs2.next()) {
                 String titulo = "🐾 " + rs2.getString("nombre_mascota");
                 String subtitulo = "Toca: " + rs2.getString("tipo_evento");
-                listaTotal.add(new EventoTati(rs2.getDate("proxima_fecha"), titulo, subtitulo, "MASCOTA"));
+                // En notas ponemos el producto y las observaciones
+                String notas = (rs2.getString("producto") != null ? rs2.getString("producto") : "") + 
+                               (rs2.getString("observaciones") != null ? " (" + rs2.getString("observaciones") + ")" : "");
+                
+                listaTotal.add(new EventoTati(rs2.getDate("proxima_fecha"), titulo, subtitulo, notas, "MASCOTA"));
             }
 
-            // 3. HOGAR (Renovaciones)
-            ResultSet rs3 = st.executeQuery("SELECT fecha_renovacion, titulo, importe FROM gestion_tati WHERE fecha_renovacion IS NOT NULL");
+            // 3. HOGAR
+            ResultSet rs3 = st.executeQuery("SELECT fecha_renovacion, titulo, importe, observaciones FROM gestion_tati WHERE fecha_renovacion IS NOT NULL");
             while(rs3.next()) {
                 String titulo = "🏠 " + rs3.getString("titulo");
-                String subtitulo = (rs3.getDouble("importe") > 0) ? rs3.getDouble("importe") + " €" : "Revisar";
-                listaTotal.add(new EventoTati(rs3.getDate("fecha_renovacion"), titulo, subtitulo, "HOGAR"));
+                String subtitulo = (rs3.getDouble("importe") > 0) ? "💰 " + rs3.getDouble("importe") + " €" : "Revisar";
+                String notas = rs3.getString("observaciones");
+                
+                listaTotal.add(new EventoTati(rs3.getDate("fecha_renovacion"), titulo, subtitulo, notas, "HOGAR"));
             }
             
             conn.close();
 
-            // Enviamos la lista completa a la vista
             request.setAttribute("listaTotal", listaTotal);
             request.getRequestDispatcher("vista_calendario_tati.jsp").forward(request, response);
 

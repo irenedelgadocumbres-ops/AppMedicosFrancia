@@ -11,19 +11,21 @@
 <%
     List<EventoTati> lista = (List<EventoTati>) request.getAttribute("listaTotal");
     
-    // CONSTRUIR EL JSON PARA JAVASCRIPT
+    // CONSTRUIR EL JSON
     StringBuilder jsData = new StringBuilder("[");
     boolean primero = true;
     if (lista != null) {
         for(EventoTati e : lista) {
             if(!primero) jsData.append(",");
-            // Escapamos comillas simples para evitar errores de JS
-            String tituloSafe = e.getTitulo().replace("'", "\\'");
-            String subSafe = e.getSubtitulo() != null ? e.getSubtitulo().replace("'", "\\'") : "";
+            // Limpiamos caracteres que rompen el JS
+            String tituloSafe = e.getTitulo().replace("'", "\\'").replace("\"", "\\\"");
+            String subSafe = e.getSubtitulo() != null ? e.getSubtitulo().replace("'", "\\'").replace("\"", "\\\"") : "";
+            String notasSafe = e.getNotas() != null ? e.getNotas().replace("'", "\\'").replace("\"", "\\\"").replace("\n", " ") : "";
             
             jsData.append("{fecha:'").append(e.getFecha().toString())
                   .append("', titulo:'").append(tituloSafe)
                   .append("', detalle:'").append(subSafe)
+                  .append("', notas:'").append(notasSafe)
                   .append("', tipo:'").append(e.getTipo()).append("'}");
             primero = false;
         }
@@ -44,15 +46,16 @@
         h1 { text-align: center; color: #00695c; margin-top: 0; }
         .btn-volver { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #00897b; font-weight: bold; }
 
-        /* LEYENDA DE COLORES */
-        .leyenda { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-        .leyenda-item { display: flex; align-items: center; gap: 5px; font-size: 0.9em; font-weight: bold; color: #555; }
+        /* LEYENDA */
+        .leyenda { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .leyenda-item { display: flex; align-items: center; gap: 5px; font-size: 0.85em; font-weight: bold; color: #555; }
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
         
-        /* COLORES TATI */
-        .c-MEDICO { background-color: #009688; } /* Teal */
-        .c-MASCOTA { background-color: #ff7043; } /* Naranja */
-        .c-HOGAR { background-color: #3949ab; }   /* Índigo */
+        /* COLORES */
+        .c-MEDICO_TATI { background-color: #e91e63; box-shadow: 0 0 5px rgba(233, 30, 99, 0.4); } 
+        .c-MEDICO_TIO { background-color: #1976d2; box-shadow: 0 0 5px rgba(25, 118, 210, 0.4); }
+        .c-MASCOTA { background-color: #ff7043; } 
+        .c-HOGAR { background-color: #3949ab; }   
 
         /* CALENDARIO */
         .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -69,14 +72,13 @@
         .calendar-day:hover { background: #f0f0f0; }
         .hoy { border-color: #00bcd4; background: #e0f7fa; }
         
-        /* Puntos dentro del día */
         .event-dots { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
         .mini-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
-        /* MODAL (Ventana Emergente) */
+        /* MODAL */
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
         .modal-content { 
-            background: white; margin: 30% auto; padding: 25px; border-radius: 25px; 
+            background: white; margin: 20% auto; padding: 25px; border-radius: 25px; 
             width: 85%; max-width: 400px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
             animation: slideUp 0.3s;
         }
@@ -84,10 +86,22 @@
         
         .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa; }
         
+        /* TARJETAS DENTRO DEL POPUP */
         .modal-item { 
-            padding: 12px; border-radius: 12px; margin-bottom: 12px; 
+            padding: 15px; border-radius: 12px; margin-bottom: 12px; 
             border-left: 6px solid #ccc; background: #f5f5f5; 
+            text-align: left;
         }
+        
+        .b-MEDICO_TATI { border-left-color: #e91e63; background: #fce4ec; color: #880e4f; }
+        .b-MEDICO_TIO  { border-left-color: #1976d2; background: #e3f2fd; color: #0d47a1; }
+        .b-MASCOTA { border-left-color: #ff7043; background: #fbe9e7; color: #bf360c; }
+        .b-HOGAR { border-left-color: #3949ab; background: #e8eaf6; color: #1a237e; }
+
+        .item-titulo { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; }
+        .item-detalle { font-size: 0.95em; opacity: 0.9; margin-bottom: 5px; }
+        .item-notas { font-size: 0.9em; font-style: italic; opacity: 0.8; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 5px; margin-top: 5px; }
+
     </style>
 </head>
 <body onload="renderCalendar()">
@@ -96,7 +110,8 @@
         <h1>📅 Agenda Global Tati</h1>
 
         <div class="leyenda">
-            <div class="leyenda-item"><span class="dot c-MEDICO"></span> Médicos</div>
+            <div class="leyenda-item"><span class="dot c-MEDICO_TATI"></span> Tati</div>
+            <div class="leyenda-item"><span class="dot c-MEDICO_TIO"></span> Tío</div>
             <div class="leyenda-item"><span class="dot c-MASCOTA"></span> Mascotas</div>
             <div class="leyenda-item"><span class="dot c-HOGAR"></span> Hogar</div>
         </div>
@@ -119,9 +134,7 @@
     </div>
 
     <script>
-        // Recibimos los datos del servidor
         const eventos = <%= jsData.toString() %>;
-        
         let fechaActual = new Date();
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
@@ -135,7 +148,6 @@
             const label = document.getElementById("mes-anio");
             grid.innerHTML = "";
 
-            // Pintar días de la semana
             ["L","M","X","J","V","S","D"].forEach(d => {
                 const div = document.createElement("div");
                 div.className = "cal-day-header";
@@ -147,23 +159,18 @@
             const anio = fechaActual.getFullYear();
             label.innerText = meses[mes] + " " + anio;
 
-            // Calcular huecos vacíos
             const primerDia = new Date(anio, mes, 1).getDay();
-            const ajuste = (primerDia === 0) ? 6 : primerDia - 1; // Ajuste para que Lunes sea el primero
+            const ajuste = (primerDia === 0) ? 6 : primerDia - 1; 
             const diasMes = new Date(anio, mes + 1, 0).getDate();
 
-            // Celdas vacías
             for(let i=0; i<ajuste; i++) grid.appendChild(document.createElement("div"));
 
-            // Días del mes
             const hoy = new Date();
             for(let i=1; i<=diasMes; i++) {
-                // Formato de fecha para comparar (YYYY-MM-DD)
                 const mesStr = (mes+1).toString().padStart(2,'0');
                 const diaStr = i.toString().padStart(2,'0');
                 const fISO = anio + "-" + mesStr + "-" + diaStr;
                 
-                // Buscar eventos de este día
                 const eventosDia = eventos.filter(e => e.fecha === fISO);
 
                 const cell = document.createElement("div");
@@ -185,9 +192,8 @@
                     });
                     cell.appendChild(dotsContainer);
                     
-                    // Al hacer clic, abrimos el modal con los datos
                     cell.onclick = () => openModal(i, mes, anio, eventosDia);
-                    cell.style.backgroundColor = "#e0f2f1"; // Color suave de fondo si hay evento
+                    cell.style.backgroundColor = "#e0f2f1"; 
                 }
                 grid.appendChild(cell);
             }
@@ -200,17 +206,19 @@
             body.innerHTML = "";
 
             lista.forEach(ev => {
-                let color = "#999";
-                if(ev.tipo === "MEDICO") color="#009688";
-                if(ev.tipo === "MASCOTA") color="#ff7043";
-                if(ev.tipo === "HOGAR") color="#3949ab";
-
                 const div = document.createElement("div");
-                div.className = "modal-item";
-                div.style.borderLeftColor = color;
+                div.className = "modal-item b-" + ev.tipo;
                 
-                div.innerHTML = "<div style='color:"+color+"; font-weight:bold;'>" + ev.titulo + "</div>" +
-                                "<div style='color:#666; font-size:0.9em; margin-top:4px;'>" + ev.detalle + "</div>";
+                // Construimos el HTML de la tarjeta con toda la info
+                let html = "<div class='item-titulo'>" + ev.titulo + "</div>" +
+                           "<div class='item-detalle'>" + ev.detalle + "</div>";
+                
+                // Si hay notas, las añadimos
+                if (ev.notas && ev.notas !== "") {
+                    html += "<div class='item-notas'>📝 " + ev.notas + "</div>";
+                }
+
+                div.innerHTML = html;
                 body.appendChild(div);
             });
             modal.style.display = "block";

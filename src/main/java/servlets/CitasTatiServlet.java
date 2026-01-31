@@ -27,9 +27,12 @@ public class CitasTatiServlet extends HttpServlet {
         
         String accion = request.getParameter("accion");
         String idStr = request.getParameter("id");
-        List<CitaTati> pendientes = new ArrayList<>();
-        List<CitaTati> historial = new ArrayList<>();
-        LocalDate hoy = LocalDate.now();
+        
+        // 1. DETECTAR PERSONA (Por defecto Tati)
+        String personaActual = request.getParameter("persona");
+        if (personaActual == null || personaActual.isEmpty()) {
+            personaActual = "Tati";
+        }
 
         try {
             Class.forName("org.postgresql.Driver");
@@ -40,22 +43,29 @@ public class CitasTatiServlet extends HttpServlet {
                 PreparedStatement ps = conn.prepareStatement("DELETE FROM citas_tati WHERE id=?");
                 ps.setInt(1, Integer.parseInt(idStr));
                 ps.executeUpdate();
-                conn.close();
-                response.sendRedirect("CitasTatiServlet");
+                // Redirigimos manteniendo la persona seleccionada
+                response.sendRedirect("CitasTatiServlet?persona=" + personaActual);
                 return;
             }
 
-            // LEER
-            String sql = "SELECT * FROM citas_tati ORDER BY fecha ASC, hora ASC";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
+            // LEER (Filtrando por persona)
+            List<CitaTati> pendientes = new ArrayList<>();
+            List<CitaTati> historial = new ArrayList<>();
+            LocalDate hoy = LocalDate.now();
+
+            String sql = "SELECT * FROM citas_tati WHERE persona = ? ORDER BY fecha ASC, hora ASC";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, personaActual);
+            ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 Date fechaSql = rs.getDate("fecha");
                 CitaTati c = new CitaTati(
                     rs.getInt("id"), fechaSql, rs.getString("hora"),
                     rs.getString("especialista"), rs.getString("lugar"),
-                    rs.getString("observaciones")
+                    rs.getString("observaciones"), rs.getString("persona")
                 );
+                
                 if(fechaSql.toLocalDate().isBefore(hoy)) {
                     historial.add(c);
                 } else {
@@ -63,8 +73,11 @@ public class CitasTatiServlet extends HttpServlet {
                 }
             }
             conn.close();
+
             request.setAttribute("listaPendientes", pendientes);
             request.setAttribute("listaHistorial", historial);
+            request.setAttribute("personaActual", personaActual); // Para pintar la vista del color correcto
+            
             request.getRequestDispatcher("vista_medicos_tati.jsp").forward(request, response);
 
         } catch (Exception e) { response.getWriter().println("Error: " + e.getMessage()); }
@@ -74,21 +87,27 @@ public class CitasTatiServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+        
+        String persona = request.getParameter("persona"); // Capturamos para quién es
+        
         try {
             Class.forName("org.postgresql.Driver");
             Connection conn = DriverManager.getConnection(dbURL, dbUser, dbPass);
             
-            String sql = "INSERT INTO citas_tati (fecha, hora, especialista, lugar, observaciones) VALUES (?::date, ?::time, ?, ?, ?)";
+            String sql = "INSERT INTO citas_tati (fecha, hora, especialista, lugar, observaciones, persona) VALUES (?::date, ?::time, ?, ?, ?, ?)";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, request.getParameter("fecha"));
             ps.setString(2, request.getParameter("hora"));
             ps.setString(3, request.getParameter("especialista"));
             ps.setString(4, request.getParameter("lugar"));
             ps.setString(5, request.getParameter("observaciones"));
+            ps.setString(6, persona);
             
             ps.executeUpdate();
             conn.close();
-            response.sendRedirect("CitasTatiServlet");
         } catch (Exception e) { e.printStackTrace(); }
+        
+        // Al guardar, volvemos a la pestaña de esa persona
+        response.sendRedirect("CitasTatiServlet?persona=" + persona);
     }
 }
