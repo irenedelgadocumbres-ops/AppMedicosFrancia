@@ -31,11 +31,11 @@
     }
 
     String[] especialistas = {
-        "Médico Cabecera", "Enfermera", "Traumatólogo", "Enfermera Trauma", 
+        "Médico Cabecera", "Enfermera Cabecera", "Traumatólogo", "Enfermera Trauma", 
         "Cirugía Bariátrica", "Endocrino", "Rehabilitación", "Rehabilitador", 
         "Reumatóloga (Autoinmune)", "Reumatóloga", "Otorrino", "Análisis", "Eco", 
         "Radiografía", "TAC / Resonancia", "Digestivo", "Unidad del Dolor", 
-        "Ginecólogo", "Trauma Cirugía Ortopédica", "Neurocirujano", "Urólogo", 
+        "Ginecólogo", "Trauma Cirugía Ortopédica", "Neurocirujano", "Urólogo", "Mamografia",
         "Neumólogo", "Máquina Apnea Sueño", "Dentista", "Podólogo", "Oculista", "Farmacia Hospital", 
     };
 
